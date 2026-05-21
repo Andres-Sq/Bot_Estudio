@@ -3,7 +3,7 @@ import os
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
 from dotenv import load_dotenv
-from google import genai  # <- Nuevo SDK de Google
+from google import genai
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 
@@ -27,50 +27,53 @@ def consultar_sistema_rag():
         embedding_function=embeddings
     )
 
-    # Inicializamos el cliente moderno de Gemini para el texto
     print(" Inicializando cliente de Google Gemini...")
     ai_client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
 
-    print("\n Base de datos conectada y Gemini listo.")
-    print("Escribe tu pregunta sobre el manual de Git (o escribe 'salir' para terminar):\n")
+    print("\n Base de datos conectada. ¡Tu tutor de Estudios Sociales del MEP está listo!")
+    print("Escribe tu pregunta sobre el temario de Bachillerato (o escribe 'salir' para terminar):\n")
 
     while True:
         pregunta = input("👤 Tu pregunta: ")
         if pregunta.lower() == 'salir':
-            print("¡Hasta luego!")
+            print("¡Hasta luego y éxitos en el estudio!")
             break
         
         if not pregunta.strip():
             continue
 
-        print("\n🔍 Buscando fragmentos en el PDF...")
-        resultados = vector_store.similarity_search(pregunta, k=3)
+        print("\n🔍 Analizando los contenidos del MEP...")
+        # Buscamos los 4 fragmentos más relevantes del temario
+        resultados = vector_store.similarity_search(pregunta, k=4)
 
-        # Unimos los fragmentos encontrados para dárselos como contexto a la IA
         contexto_pdf = "\n\n".join([f"[Página {doc.metadata.get('page')}]: {doc.page_content}" for doc in resultados])
 
-        print("🤖 Gemini redactando respuesta basada en tu manual...")
+        print("🤖 ProfeBot está redactando tu explicación explicativa...")
         
-        # Estructuramos el Prompt para obligar a Gemini a usar SOLO tu PDF
+        # Prompt super-tutor: Temario + Desarrollo de materia (Limpio y Corregido)
         prompt_rag = f"""
-        Eres un asistente experto en Git. Responde la pregunta del usuario utilizando ÚNICAMENTE el contexto extraído del manual proporcionado abajo. 
-        Si la respuesta no se encuentra en el contexto, di amigablemente que esa información no viene en el manual.
+        Eres "ProfeBot", un profesor y tutor de Estudios Sociales de Costa Rica, apasionado, dinámico y experto en preparar estudiantes para Bachillerato del MEP.
+        Tu objetivo es explicar la materia que el estudiante te pida basándote en los objetivos del temario proporcionado.
 
-        CONTEXTO DEL MANUAL:
+        REGLAS DE RESPUESTA:
+        1. Identifica qué temas y objetivos menciona el "CONTEXTO DEL TEMARIO" abajo sobre la pregunta del alumno.
+        2. ¡DESARROLLA LA MATERIA!: No te limites a listar los temas. Explica la materia a fondo de forma educativa, estructurada y fácil de entender. Usa viñetas, definiciones claras y ejemplos costarricenses.
+        3. Si el temario solo menciona "Relieve de Costa Rica", tú debes explicar cuáles son esas cordilleras, sus características principales y datos clave que el MEP suele preguntar en los exámenes de Bachillerato.
+
+        CONTEXTO DEL TEMARIO:
         {contexto_pdf}
 
-        PREGUNTA DEL USUARIO:
+        PREGUNTA DEL ESTUDIANTE:
         {pregunta}
         """
 
         try:
-            # Llamamos a gemini-2.5-flash (disponible e ideal para el tier gratuito)
             response = ai_client.models.generate_content(
                 model='gemini-2.5-flash',
                 contents=prompt_rag,
             )
             
-            print("\n✨ RESPUESTA DEL ASISTENTE:")
+            print("\n✨ RESPUESTA DEL TUTOR (MEP):")
             print("-" * 60)
             print(response.text.strip())
             print("-" * 60)
