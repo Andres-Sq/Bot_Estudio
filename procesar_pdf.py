@@ -42,7 +42,7 @@ def procesar_documento_pdf(ruta_pdf):
     return vector_store
 
 if __name__ == "__main__":
-    archivo_prueba = "documentos/manual_git.pdf" 
+    archivo_prueba = "documentos/estudios_sociales.pdf"  #se cambia segun el pdf que se requiera cargar
     
     if os.path.exists(archivo_prueba):
         procesar_documento_pdf(archivo_prueba)
